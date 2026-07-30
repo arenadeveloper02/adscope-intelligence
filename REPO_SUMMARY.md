@@ -1,21 +1,22 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:43:21.965Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:43:25.182Z.
 
 ## Overview
 
-AdScope Intelligence — enter any company name or website and instantly see its currently-live Google Ads footprint: formats, regions, first-seen dates, and volume signals.
+AdScope Intelligence — Google Ads competitive intel. Build fixed the SAFE way: the potential_dataloss error means the live AdAnalysis table still has an updatedAt column that the schema file dropped; the correct (and only production-safe) fix is to restore `updatedAt DateTime @updatedAt @default(now())` in prisma/schema.prisma so plain `prisma db push` succeeds without dropping data. The build script intentionally stays `prisma generate && prisma db push && next build` — adding --accept-data-loss would permanently destroy the live updatedAt data and is forbidden for this deployed database. Live-ads-only rendering, the LIVE indicator left of the header count chip, and the emerald 'Live' pill on each ad card are all already enforced in HomeClient/AdRow and remain unchanged.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Company / domain search with instant Google Ads analysis
-- Live-ads-only feed — Paused/Ended/Expired creatives are filtered before rendering
-- Pulsing emerald LIVE indicator next to the live-count chip and a Live pill on every ad row
-- KPI tiles, cyan→violet ad-volume score ring, and format breakdown derived from live ads only
-- Recent searches persisted in Neon Postgres via Prisma
+- Company search with instant Google Ads footprint analysis
+- Live-ads-only feed — Paused/Inactive/Ended/Expired creatives are filtered before rendering
+- Pulsing emerald LIVE indicator beside the header active-ads count chip
+- Emerald 'Live' pill in the top-right of every ad card
+- KPI tiles, format breakdown bars, and cyan→violet Ad Volume Score ring
+- Recent searches persisted via Prisma + Neon Postgres
 
 ## Tech Stack
 
@@ -111,7 +112,7 @@ AdScope Intelligence — enter any company name or website and instantly see its
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T11:43:21.965Z
+- **Updated at:** 2026-07-30T11:43:25.182Z
 - **Request:** Edit the existing adscope-intelligence app. The Vercel build is currently FAILING on a Prisma migration error, not on app code. Fix the build first, then keep the live-ads behavior. Do ALL of the following:
 
 1) FIX THE BUILD (root cause): The build command runs `prisma db push` and it fails with `code: potential_dataloss` because it wants to drop the `updatedAt` column on the `AdAnalysis` table which still has non-null data. Fix this by making the `db push` non-blocking:
