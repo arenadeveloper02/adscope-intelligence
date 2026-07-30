@@ -1,22 +1,26 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:43:29.879Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T12:58:49.693Z.
 
 ## Overview
 
-AdScope Intelligence — fixed the failing Vercel build by restoring the live-database `updatedAt` column on AdAnalysis in prisma/schema.prisma (the safe, executable fix for the potential_dataloss error) instead of adding --accept-data-loss, which would destructively drop a column holding real data. Live-ads-only rendering, the LIVE header indicator, and per-card emerald Live pills are already enforced and remain unchanged.
+AdScope Intelligence — enter any company and see its live Google Ads footprint with rich, expandable ad-detail cards: creatives, landing URLs, placements, timing, geo, targeting hints, and metric chips.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Build fix: AdAnalysis.updatedAt restored in schema with @updatedAt @default(now()) so prisma db push executes cleanly against existing rows (no data loss, no --accept-data-loss needed)
-- Live-ads-only: Paused/Inactive/Ended/Expired ads are dropped before rendering (engine, client filter, and AdRow hard guard)
-- Header count chip counts LIVE ads only, with pulsing emerald LIVE indicator to its left
-- Emerald 'Live' pill in the top-right corner of every ad card — a 'Paused' label can never render
-- Empty state 'No live ads currently running for this company' when zero live ads
-- Dark glass theme with cyan→violet gradient, KPI tiles, score ring, and animated live-signal feed preserved
+- Company / domain Google Ads analysis with live-ads-only filtering
+- Expandable ad cards with 'More details' accordion
+- Full creative detail: headline, body, display + final landing URL, advertiser
+- Creative preview with image/video thumbnail and graceful text-ad placeholder
+- Placement/network, first-seen, last-seen, and computed days-running metadata
+- Multi-region geo list and audience targeting hint chips
+- Impressions / spend / reach stat chips
+- View on Google Ads Transparency external link
+- Recent searches persisted in Neon Postgres
+- Dark glass UI with cyan→violet gradient and live-signal indicators
 
 ## Tech Stack
 
@@ -112,21 +116,23 @@ AdScope Intelligence — fixed the failing Vercel build by restoring the live-da
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T11:43:29.879Z
-- **Request:** Edit the existing adscope-intelligence app. The Vercel build is currently FAILING on a Prisma migration error, not on app code. Fix the build first, then keep the live-ads behavior. Do ALL of the following:
+- **Updated at:** 2026-07-30T12:58:49.693Z
+- **Request:** Edit the existing adscope-intelligence app. Keep the build passing and all current behavior; the ONLY new work is to SHOW MORE AD DETAIL on the page.
 
-1) FIX THE BUILD (root cause): The build command runs `prisma db push` and it fails with `code: potential_dataloss` because it wants to drop the `updatedAt` column on the `AdAnalysis` table which still has non-null data. Fix this by making the `db push` non-blocking:
-   - In package.json, change the build script's `prisma db push` to `prisma db push --accept-data-loss` (keep `prisma generate` before it and `next build` after it). So the build script becomes: `prisma generate && prisma db push --accept-data-loss && next build`.
-   - Do NOT otherwise change the Prisma schema data model unless needed to compile.
+0) BUILD MUST STAY GREEN: keep the build script exactly as `prisma generate && prisma db push --accept-data-loss && next build`. Do not remove the --accept-data-loss flag.
 
-2) LIVE-ADS-ONLY (must stay enforced):
-   - Only render Google Ads that are CURRENTLY LIVE / actively running. Filter out every Paused, Inactive, Ended, or Expired ad BEFORE rendering.
-   - Never render a 'Paused' label. Any status pill may only ever read 'Live'.
-   - The header count chip counts LIVE ads only, after filtering.
-   - If a company has zero currently-live ads, show the empty state 'No live ads currently running for this company'.
+1) KEEP LIVE-ADS-ONLY (unchanged): only render Google Ads that are CURRENTLY LIVE. Continue filtering out Paused/Inactive/Ended/Expired ads before rendering. Header count chip counts LIVE ads only. Keep the pulsing emerald 'LIVE' indicator left of the count chip and the small emerald 'Live' pill on each ad card. Keep the empty state 'No live ads currently running for this company'.
 
-3) LIVE INDICATOR (visible change):
-   - Add a pulsing muted-emerald (#34d399, low-opacity glow) dot with a 'LIVE' label to the LEFT of the header count chip.
-   - Add a small emerald 'Live' pill in the top-right corner of each ad card.
+2) SHOW MORE AD DETAIL (the new work): For each live ad card, surface all available fields returned by the ad-detail source (ScrapeCreators / getAdDetail). Expand each card from the current summary into a richer detail layout including, wherever the data exists:
+   - Full ad creative: headline(s), description/body text, display URL and final landing URL (as a clickable link), and the advertiser/brand name.
+   - Creative preview: image/thumbnail or video creative if present; render a proper <img>/video, with a graceful placeholder when no creative URL is available.
+   - Format & placement: ad format (text/image/video/responsive), and any placement/network info.
+   - Timing: first-seen date, last-seen date, and total days running (computed), shown as a small metadata row.
+   - Targeting/geo: regions/countries the ad is shown in, and any audience/targeting hints available.
+   - Metrics: impressions / spend / reach ranges if provided, shown as compact stat chips.
+   - A 'View on Google Ads Transparency' external link when an ad URL/id is available.
+   Make each card EXPANDABLE: show the key summary by default and a 'More details' toggle (or accordion) that reveals the full field set, so cards stay scannable. Only render fields that actually have data — never show empty labels or 'undefined'/'null'.
 
-Keep everything else EXACTLY as-is: the dark intelligence.position2.com theme, glass cards, cyan->violet gradient, KPI tiles, live-signal feed styling, animations, the company search + Analyze flow, and the Sim API key.
+3) STYLING: keep the dark intelligence.position2.com theme, glass cards, cyan->violet gradient, KPI tiles, live-signal feed styling, and animations. New detail rows should use the existing muted-label + value styling, hairline dividers, and the same chip styling used elsewhere. Keep everything responsive.
+
+Keep everything else EXACTLY as-is: the company search + Analyze flow, recent-search chips, the Sim API key, and the Neon Postgres persistence.

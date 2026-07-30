@@ -36,6 +36,34 @@ const REGIONS = [
 ]
 
 const IMPRESSION_BUCKETS = ['1K–10K', '10K–50K', '50K–100K', '100K–500K', '500K–1M', '1M+']
+const SPEND_BUCKETS = ['<$1K', '$1K–$5K', '$5K–$25K', '$25K–$100K', '$100K+']
+const REACH_BUCKETS = ['5K–25K', '25K–100K', '100K–500K', '500K–2M', '2M+']
+
+const PATHS = ['/', '/pricing', '/demo', '/features', '/signup', '/compare']
+
+const PLACEMENTS: Record<AdFormat, string> = {
+  Search: 'Google Search results',
+  Display: 'Google Display Network',
+  Video: 'YouTube & video partners',
+  Shopping: 'Google Shopping tab',
+}
+
+const NETWORKS: Record<AdFormat, string> = {
+  Search: 'Search Network',
+  Display: 'Display Network',
+  Video: 'Video Network',
+  Shopping: 'Shopping Network',
+}
+
+const AUDIENCE_HINTS = [
+  'In-market: Business Software',
+  'Remarketing list',
+  'Custom intent: competitor terms',
+  'Keyword: brand terms',
+  'Affinity: Business Professionals',
+  'Similar audiences',
+  'Life events: job change',
+]
 
 const HEADLINES = [
   '{name} — Official Site',
@@ -121,6 +149,39 @@ export function runAnalysis(rawQuery: string): AnalysisResult {
     if (firstSeen < earliest) earliest = firstSeen
     regionSet.add(region)
 
+    // ---- extended detail fields (all deterministic per domain) ----
+    const path = PATHS[Math.floor(rng() * PATHS.length)]
+    const displayUrl = path === '/' ? domain : `${domain}${path}`
+    const finalUrl = `https://${domain}${path === '/' ? '' : path}?utm_source=google&utm_medium=cpc`
+
+    const lastSeenDaysAgo = Math.floor(rng() * 7)
+    const lastSeen = new Date(Date.now() - lastSeenDaysAgo * 86400000).toISOString().slice(0, 10)
+
+    const hasSecondary = rng() < 0.65
+    const secondaryHeadline = hasSecondary
+      ? HEADLINES[(headlineIdx + 3 + Math.floor(rng() * 4)) % HEADLINES.length].replace('{name}', companyName)
+      : undefined
+
+    const adRegions: string[] = [region]
+    const extraRegions = Math.floor(rng() * 3)
+    for (let k = 0; k < extraRegions; k++) {
+      const candidate = REGIONS[Math.floor(rng() * REGIONS.length)]
+      if (!adRegions.includes(candidate)) {
+        adRegions.push(candidate)
+        regionSet.add(candidate)
+      }
+    }
+
+    const hintCount = 1 + Math.floor(rng() * 3)
+    const hints: string[] = []
+    for (let k = 0; k < hintCount; k++) {
+      const candidate = AUDIENCE_HINTS[Math.floor(rng() * AUDIENCE_HINTS.length)]
+      if (!hints.includes(candidate)) hints.push(candidate)
+    }
+
+    const spend = SPEND_BUCKETS[Math.floor(rng() * SPEND_BUCKETS.length)]
+    const reach = REACH_BUCKETS[Math.floor(rng() * REACH_BUCKETS.length)]
+
     ads.push({
       id: `${domain}-${i}`,
       headline: HEADLINES[headlineIdx].replace('{name}', companyName),
@@ -130,6 +191,18 @@ export function runAnalysis(rawQuery: string): AnalysisResult {
       region,
       impressions: IMPRESSION_BUCKETS[impressionsIdx],
       status: 'Active',
+      secondaryHeadline,
+      advertiser: companyName,
+      displayUrl,
+      finalUrl,
+      placement: PLACEMENTS[format],
+      network: NETWORKS[format],
+      lastSeen,
+      regions: adRegions,
+      audienceHints: hints,
+      spend,
+      reach,
+      transparencyUrl: `https://adstransparency.google.com/?domain=${encodeURIComponent(domain)}&region=anywhere`,
     })
   }
 

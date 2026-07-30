@@ -9,6 +9,20 @@ export interface AdItem {
   region: string
   impressions: string
   status: 'Active' | 'Paused'
+  // Extended ad-detail fields (all optional — only render when present)
+  secondaryHeadline?: string
+  advertiser?: string
+  displayUrl?: string
+  finalUrl?: string
+  creativeUrl?: string
+  placement?: string
+  network?: string
+  lastSeen?: string
+  regions?: string[]
+  audienceHints?: string[]
+  spend?: string
+  reach?: string
+  transparencyUrl?: string
 }
 
 export interface AnalysisKpis {
