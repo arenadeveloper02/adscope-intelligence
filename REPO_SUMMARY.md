@@ -1,21 +1,21 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:46:31.808Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:46:33.653Z.
 
 ## Overview
 
-AdScope Intelligence — enter any company name or website and instantly see its live Google Ads footprint, now with client-side CSV export of live ad results.
+AdScope Intelligence — enter any company name or website and instantly surface its live Google Ads footprint, now with client-side CSV export of live ad results.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Company / domain Google Ads analysis with live-ads-only filtering
+- Company / domain Google Ads analysis with live-only ad feed
 - KPI tiles, volume score ring, and format breakdown derived from live ads
-- Expandable ad cards with full creative, placement, timing, geo, and metric detail
-- Client-side Export CSV button for all currently displayed live ads
-- Recent searches persisted in Neon Postgres via Prisma
+- Expandable ad cards with full creative, placement, targeting, and metric detail
+- Recent searches persisted to Neon Postgres via Prisma
+- NEW: Export CSV button that downloads the currently displayed live ads client-side
 
 ## Tech Stack
 
@@ -111,7 +111,7 @@ AdScope Intelligence — enter any company name or website and instantly see its
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T13:46:31.808Z
+- **Updated at:** 2026-07-30T13:46:33.653Z
 - **Request:** Edit the existing adscope-intelligence app. Keep the build passing and all current behavior; the ONLY new work is to ADD A CSV EXPORT BUTTON for the live ad results.
 
 0) BUILD MUST STAY GREEN: keep the build script exactly as `prisma generate && prisma db push --accept-data-loss && next build`. Do not remove the --accept-data-loss flag.
