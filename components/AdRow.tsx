@@ -101,6 +101,12 @@ export default function AdRow({ ad, index }: AdRowProps) {
             )
           ) : null}
 
+          {/* Full ad copy — untruncated body text */}
+          <div>
+            <p className="dt-label">Ad Copy</p>
+            <p className="dt-value">{ad.description}</p>
+          </div>
+
           {/* Full creative + placement fields — only rendered when data exists */}
           <div className="detail-grid">
             {ad.advertiser ? (
@@ -113,6 +119,18 @@ export default function AdRow({ ad, index }: AdRowProps) {
               <div>
                 <p className="dt-label">Headline 2</p>
                 <p className="dt-value">{ad.secondaryHeadline}</p>
+              </div>
+            ) : null}
+            {ad.ctaText ? (
+              <div>
+                <p className="dt-label">Call to Action</p>
+                <p className="dt-value">{ad.ctaText}</p>
+              </div>
+            ) : null}
+            {ad.creativeType ? (
+              <div>
+                <p className="dt-label">Creative Type</p>
+                <p className="dt-value">{ad.creativeType}</p>
               </div>
             ) : null}
             {ad.displayUrl ? (
@@ -160,6 +178,20 @@ export default function AdRow({ ad, index }: AdRowProps) {
                 {regions.map((r) => (
                   <span key={r} className="stat-chip">
                     {r}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Device targeting */}
+          {ad.devices && ad.devices.length > 0 ? (
+            <div>
+              <p className="dt-label mb-1.5">Devices</p>
+              <div className="flex flex-wrap gap-1.5">
+                {ad.devices.map((d) => (
+                  <span key={d} className="stat-chip" style={{ color: '#67e8f9', borderColor: 'rgba(103,232,249,0.3)' }}>
+                    {d}
                   </span>
                 ))}
               </div>

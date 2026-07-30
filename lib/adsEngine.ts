@@ -55,6 +55,30 @@ const NETWORKS: Record<AdFormat, string> = {
   Shopping: 'Shopping Network',
 }
 
+const CREATIVE_TYPES: Record<AdFormat, string> = {
+  Search: 'Responsive text ad',
+  Display: 'Responsive display ad (image)',
+  Video: 'In-stream video ad',
+  Shopping: 'Product listing ad',
+}
+
+const CTA_TEXTS = [
+  'Learn More',
+  'Get Started',
+  'Try Free',
+  'Book a Demo',
+  'Shop Now',
+  'Sign Up',
+  'Compare Plans',
+]
+
+const DEVICE_SETS: string[][] = [
+  ['Desktop', 'Mobile'],
+  ['Mobile'],
+  ['Desktop', 'Mobile', 'Tablet'],
+  ['Desktop'],
+]
+
 const AUDIENCE_HINTS = [
   'In-market: Business Software',
   'Remarketing list',
@@ -182,6 +206,10 @@ export function runAnalysis(rawQuery: string): AnalysisResult {
     const spend = SPEND_BUCKETS[Math.floor(rng() * SPEND_BUCKETS.length)]
     const reach = REACH_BUCKETS[Math.floor(rng() * REACH_BUCKETS.length)]
 
+    const hasCta = rng() < 0.8
+    const ctaText = hasCta ? CTA_TEXTS[Math.floor(rng() * CTA_TEXTS.length)] : undefined
+    const devices = DEVICE_SETS[Math.floor(rng() * DEVICE_SETS.length)]
+
     ads.push({
       id: `${domain}-${i}`,
       headline: HEADLINES[headlineIdx].replace('{name}', companyName),
@@ -203,6 +231,9 @@ export function runAnalysis(rawQuery: string): AnalysisResult {
       spend,
       reach,
       transparencyUrl: `https://adstransparency.google.com/?domain=${encodeURIComponent(domain)}&region=anywhere`,
+      ctaText,
+      devices,
+      creativeType: CREATIVE_TYPES[format],
     })
   }
 

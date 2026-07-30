@@ -1,26 +1,22 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T12:58:49.693Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:03:26.581Z.
 
 ## Overview
 
-AdScope Intelligence — enter any company and see its live Google Ads footprint with rich, expandable ad-detail cards: creatives, landing URLs, placements, timing, geo, targeting hints, and metric chips.
+AdScope Intelligence — enter any company name or website and instantly see its live Google Ads footprint: formats, regions, creatives, timing, targeting hints, and volume signals, rendered on a dark glass intelligence dashboard.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Company / domain Google Ads analysis with live-ads-only filtering
-- Expandable ad cards with 'More details' accordion
-- Full creative detail: headline, body, display + final landing URL, advertiser
-- Creative preview with image/video thumbnail and graceful text-ad placeholder
-- Placement/network, first-seen, last-seen, and computed days-running metadata
-- Multi-region geo list and audience targeting hint chips
-- Impressions / spend / reach stat chips
-- View on Google Ads Transparency external link
-- Recent searches persisted in Neon Postgres
-- Dark glass UI with cyan→violet gradient and live-signal indicators
+- Company / domain search with Analyze flow and recent-search chips
+- Live-ads-only feed — Paused/Inactive/Ended/Expired creatives are filtered before render
+- Expandable ad cards with full creative, placement, timing, targeting, and metric detail
+- Pulsing emerald LIVE indicator and per-card Live pills
+- KPI tiles, cyan→violet volume score ring, and format breakdown bars
+- Neon Postgres persistence of analysis history via Prisma
 
 ## Tech Stack
 
@@ -116,7 +112,7 @@ AdScope Intelligence — enter any company and see its live Google Ads footprint
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T12:58:49.693Z
+- **Updated at:** 2026-07-30T13:03:26.581Z
 - **Request:** Edit the existing adscope-intelligence app. Keep the build passing and all current behavior; the ONLY new work is to SHOW MORE AD DETAIL on the page.
 
 0) BUILD MUST STAY GREEN: keep the build script exactly as `prisma generate && prisma db push --accept-data-loss && next build`. Do not remove the --accept-data-loss flag.

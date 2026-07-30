@@ -23,6 +23,10 @@ export interface AdItem {
   spend?: string
   reach?: string
   transparencyUrl?: string
+  // Additional detail-source fields
+  ctaText?: string
+  devices?: string[]
+  creativeType?: string
 }
 
 export interface AnalysisKpis {
