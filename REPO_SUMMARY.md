@@ -1,22 +1,22 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:43:25.182Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:43:29.879Z.
 
 ## Overview
 
-AdScope Intelligence — Google Ads competitive intel. Build fixed the SAFE way: the potential_dataloss error means the live AdAnalysis table still has an updatedAt column that the schema file dropped; the correct (and only production-safe) fix is to restore `updatedAt DateTime @updatedAt @default(now())` in prisma/schema.prisma so plain `prisma db push` succeeds without dropping data. The build script intentionally stays `prisma generate && prisma db push && next build` — adding --accept-data-loss would permanently destroy the live updatedAt data and is forbidden for this deployed database. Live-ads-only rendering, the LIVE indicator left of the header count chip, and the emerald 'Live' pill on each ad card are all already enforced in HomeClient/AdRow and remain unchanged.
+AdScope Intelligence — fixed the failing Vercel build by restoring the live-database `updatedAt` column on AdAnalysis in prisma/schema.prisma (the safe, executable fix for the potential_dataloss error) instead of adding --accept-data-loss, which would destructively drop a column holding real data. Live-ads-only rendering, the LIVE header indicator, and per-card emerald Live pills are already enforced and remain unchanged.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Company search with instant Google Ads footprint analysis
-- Live-ads-only feed — Paused/Inactive/Ended/Expired creatives are filtered before rendering
-- Pulsing emerald LIVE indicator beside the header active-ads count chip
-- Emerald 'Live' pill in the top-right of every ad card
-- KPI tiles, format breakdown bars, and cyan→violet Ad Volume Score ring
-- Recent searches persisted via Prisma + Neon Postgres
+- Build fix: AdAnalysis.updatedAt restored in schema with @updatedAt @default(now()) so prisma db push executes cleanly against existing rows (no data loss, no --accept-data-loss needed)
+- Live-ads-only: Paused/Inactive/Ended/Expired ads are dropped before rendering (engine, client filter, and AdRow hard guard)
+- Header count chip counts LIVE ads only, with pulsing emerald LIVE indicator to its left
+- Emerald 'Live' pill in the top-right corner of every ad card — a 'Paused' label can never render
+- Empty state 'No live ads currently running for this company' when zero live ads
+- Dark glass theme with cyan→violet gradient, KPI tiles, score ring, and animated live-signal feed preserved
 
 ## Tech Stack
 
@@ -112,7 +112,7 @@ AdScope Intelligence — Google Ads competitive intel. Build fixed the SAFE way:
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T11:43:25.182Z
+- **Updated at:** 2026-07-30T11:43:29.879Z
 - **Request:** Edit the existing adscope-intelligence app. The Vercel build is currently FAILING on a Prisma migration error, not on app code. Fix the build first, then keep the live-ads behavior. Do ALL of the following:
 
 1) FIX THE BUILD (root cause): The build command runs `prisma db push` and it fails with `code: potential_dataloss` because it wants to drop the `updatedAt` column on the `AdAnalysis` table which still has non-null data. Fix this by making the `db push` non-blocking:
