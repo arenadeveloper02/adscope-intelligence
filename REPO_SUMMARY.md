@@ -1,22 +1,22 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:03:37.190Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:03:54.081Z.
 
 ## Overview
 
-AdScope Intelligence — enter any company name or website and instantly see its currently-live Google Ads footprint with rich expandable per-ad detail: full creative text, landing URLs, placement, timing, targeting hints, and metric ranges.
+AdScope Intelligence — enter any company name or website and instantly surface its currently-live Google Ads footprint with rich, expandable per-ad detail: creatives, placements, timing, targeting, and metric ranges.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Live-only ad feed — Paused/Ended/Expired creatives are filtered before render
-- Expandable ad cards with full creative, URLs, placement, timing, regions, targeting hints, and metric chips
-- Pulsing emerald LIVE indicator and per-card Live pills
-- KPI tiles, Ad Volume Score ring, and format breakdown derived from live ads only
-- Recent searches persisted to Neon Postgres via Prisma
-- Dark glass UI with cyan→violet gradient theme
+- Company / domain search with Analyze flow and recent-search chips
+- Live-ads-only feed — Paused/Ended/Expired ads are never rendered
+- Expandable ad cards with full creative, placement, timing, targeting, and metric detail
+- New detail fields: full ad copy, call-to-action, and device targeting chips
+- KPI tiles, volume score ring, and format breakdown derived from live ads only
+- Neon Postgres persistence of analysis history via Prisma
 
 ## Tech Stack
 
@@ -112,7 +112,7 @@ AdScope Intelligence — enter any company name or website and instantly see its
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T13:03:37.190Z
+- **Updated at:** 2026-07-30T13:03:54.081Z
 - **Request:** Edit the existing adscope-intelligence app. Keep the build passing and all current behavior; the ONLY new work is to SHOW MORE AD DETAIL on the page.
 
 0) BUILD MUST STAY GREEN: keep the build script exactly as `prisma generate && prisma db push --accept-data-loss && next build`. Do not remove the --accept-data-loss flag.
