@@ -92,51 +92,62 @@ export function runAnalysis(rawQuery: string): AnalysisResult {
   const companyName = titleCase(baseName) || 'Unknown'
 
   const rng = createRng(hashString(domain))
-  const adCount = 8 + Math.floor(rng() * 14)
+  const candidateCount = 8 + Math.floor(rng() * 14)
 
+  // Only currently-live ads are kept. Paused / inactive / ended creatives are
+  // dropped here so they never reach the UI, KPIs, or the count chip.
   const ads: AdItem[] = []
   const formatCounts: Record<AdFormat, number> = { Search: 0, Display: 0, Video: 0, Shopping: 0 }
   let earliest = '9999-12-31'
   const regionSet = new Set<string>()
 
-  for (let i = 0; i < adCount; i++) {
+  for (let i = 0; i < candidateCount; i++) {
     const fr = rng()
     const format: AdFormat = fr < 0.45 ? 'Search' : fr < 0.7 ? 'Display' : fr < 0.87 ? 'Video' : 'Shopping'
-    formatCounts[format] += 1
 
     const daysAgo = 20 + Math.floor(rng() * 640)
     const firstSeen = new Date(Date.now() - daysAgo * 86400000).toISOString().slice(0, 10)
-    if (firstSeen < earliest) earliest = firstSeen
 
     const region = REGIONS[Math.floor(rng() * REGIONS.length)]
+    const headlineIdx = Math.floor(rng() * HEADLINES.length)
+    const descIdx = Math.floor(rng() * DESCRIPTIONS.length)
+    const impressionsIdx = Math.floor(rng() * IMPRESSION_BUCKETS.length)
+    const isLive = rng() < 0.88
+
+    if (!isLive) continue // drop paused / ended ads before rendering
+
+    formatCounts[format] += 1
+    if (firstSeen < earliest) earliest = firstSeen
     regionSet.add(region)
 
     ads.push({
       id: `${domain}-${i}`,
-      headline: HEADLINES[Math.floor(rng() * HEADLINES.length)].replace('{name}', companyName),
-      description: DESCRIPTIONS[Math.floor(rng() * DESCRIPTIONS.length)],
+      headline: HEADLINES[headlineIdx].replace('{name}', companyName),
+      description: DESCRIPTIONS[descIdx],
       format,
       firstSeen,
       region,
-      impressions: IMPRESSION_BUCKETS[Math.floor(rng() * IMPRESSION_BUCKETS.length)],
-      status: rng() < 0.88 ? 'Active' : 'Paused',
+      impressions: IMPRESSION_BUCKETS[impressionsIdx],
+      status: 'Active',
     })
   }
+
+  const liveCount = ads.length
 
   const formats: FormatBreakdown[] = (Object.keys(formatCounts) as AdFormat[])
     .filter((f) => formatCounts[f] > 0)
     .map((f) => ({ format: f, count: formatCounts[f], color: FORMAT_COLORS[f] }))
 
-  const volumeScore = 42 + Math.floor(rng() * 56)
+  const volumeScore = liveCount === 0 ? 0 : 42 + Math.floor(rng() * 56)
 
   return {
     companyName,
     domain,
     volumeScore,
     kpis: {
-      totalAds: adCount,
+      totalAds: liveCount,
       formatCount: formats.length,
-      firstSeen: earliest,
+      firstSeen: liveCount === 0 ? '—' : earliest,
       regionCount: regionSet.size,
     },
     formats,

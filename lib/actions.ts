@@ -14,6 +14,7 @@ export async function analyzeCompany(query: string): Promise<AnalyzeResponse> {
   }
   try {
     const data = runAnalysis(trimmed)
+    // data.ads contains ONLY currently-live ads; totalAds is the live count.
     await prisma.adAnalysis.create({
       data: {
         query: trimmed,

@@ -50,6 +50,8 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
     void runQuery(query)
   }
 
+  // Defensive: only ever render currently-live ads, even if upstream data changes.
+  const liveAds = result ? result.ads.filter((a) => a.status === 'Active') : []
   const maxFormat = result ? Math.max(...result.formats.map((f) => f.count), 1) : 1
 
   return (
@@ -115,55 +117,73 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
             </div>
           </div>
 
-          {/* KPI tiles */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <KpiTile label="Active Ads" value={String(result.kpis.totalAds)} delta="live now" />
-            <KpiTile label="Formats" value={String(result.kpis.formatCount)} />
-            <KpiTile label="First Seen" value={result.kpis.firstSeen} />
-            <KpiTile label="Regions" value={String(result.kpis.regionCount)} delta="expanding" />
-          </div>
-
-          {/* Score + format breakdown */}
-          <div className="mt-4 grid gap-4 lg:grid-cols-[280px_1fr]">
-            <div className="glass fade-up flex items-center justify-center p-6">
-              <ScoreRing score={result.volumeScore} label="Ad Volume Score" />
-            </div>
-            <div className="glass fade-up p-6">
-              <p className="kpi-label mb-5">Format Breakdown</p>
-              <div className="space-y-4">
-                {result.formats.map((f) => (
-                  <div key={f.format}>
-                    <div className="mb-1.5 flex items-center justify-between text-xs">
-                      <span className="font-medium text-ink">{f.format}</span>
-                      <span className="text-muted">{f.count} ads</span>
-                    </div>
-                    <div className="bar-track">
-                      <div
-                        className="bar-fill"
-                        style={{ width: `${Math.round((f.count / maxFormat) * 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Ad feed */}
-          <div className="glass fade-up mt-4 p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="kpi-label">Live Ad Signals</p>
-              <span className="pill-eye !text-[10px]">
+          {liveAds.length === 0 ? (
+            <div className="glass fade-up flex flex-col items-center px-6 py-16 text-center">
+              <span className="pill-eye">
                 <span className="pill-dot" />
-                {result.ads.filter((a) => a.status === 'Active').length} active
+                0 active
               </span>
+              <h3 className="mt-6 text-lg font-semibold text-ink">
+                No live ads currently running for this company
+              </h3>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
+                We only surface ads that are actively in rotation right now. Check back later or try
+                another company.
+              </p>
             </div>
-            <div className="divide-y divide-white/5">
-              {result.ads.map((ad, i) => (
-                <AdRow key={ad.id} ad={ad} index={i} />
-              ))}
-            </div>
-          </div>
+          ) : (
+            <>
+              {/* KPI tiles */}
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <KpiTile label="Active Ads" value={String(liveAds.length)} delta="live now" />
+                <KpiTile label="Formats" value={String(result.kpis.formatCount)} />
+                <KpiTile label="First Seen" value={result.kpis.firstSeen} />
+                <KpiTile label="Regions" value={String(result.kpis.regionCount)} delta="expanding" />
+              </div>
+
+              {/* Score + format breakdown */}
+              <div className="mt-4 grid gap-4 lg:grid-cols-[280px_1fr]">
+                <div className="glass fade-up flex items-center justify-center p-6">
+                  <ScoreRing score={result.volumeScore} label="Ad Volume Score" />
+                </div>
+                <div className="glass fade-up p-6">
+                  <p className="kpi-label mb-5">Format Breakdown</p>
+                  <div className="space-y-4">
+                    {result.formats.map((f) => (
+                      <div key={f.format}>
+                        <div className="mb-1.5 flex items-center justify-between text-xs">
+                          <span className="font-medium text-ink">{f.format}</span>
+                          <span className="text-muted">{f.count} ads</span>
+                        </div>
+                        <div className="bar-track">
+                          <div
+                            className="bar-fill"
+                            style={{ width: `${Math.round((f.count / maxFormat) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Live ad feed — only currently running ads */}
+              <div className="glass fade-up mt-4 p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="kpi-label">Live Ad Signals</p>
+                  <span className="pill-eye !text-[10px]">
+                    <span className="pill-dot" />
+                    {liveAds.length} active
+                  </span>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {liveAds.map((ad, i) => (
+                    <AdRow key={ad.id} ad={ad} index={i} />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </section>
       )}
 

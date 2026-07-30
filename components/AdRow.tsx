@@ -37,9 +37,7 @@ export default function AdRow({ ad, index }: AdRowProps) {
       </div>
       <div className="shrink-0 text-right">
         <p className="text-sm font-semibold text-ink">{ad.impressions}</p>
-        <p className={`text-[11px] ${ad.status === 'Active' ? 'text-emerald-400' : 'text-amber-400'}`}>
-          {ad.status}
-        </p>
+        <p className="text-[11px] text-emerald-400">Active</p>
       </div>
     </div>
   )
