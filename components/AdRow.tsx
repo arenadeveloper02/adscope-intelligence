@@ -13,6 +13,9 @@ const FORMAT_COLORS: Record<string, string> = {
 }
 
 export default function AdRow({ ad, index }: AdRowProps) {
+  // This row only ever receives currently-live ads (the feed filters on
+  // status === 'Active' upstream). As a hard guarantee, never render a
+  // 'Paused' label — the status text is shown only when the ad is Active.
   const color = FORMAT_COLORS[ad.format] ?? '#22d3ee'
   return (
     <div className="frow fade-up" style={{ animationDelay: `${index * 60}ms` }}>
@@ -37,7 +40,9 @@ export default function AdRow({ ad, index }: AdRowProps) {
       </div>
       <div className="shrink-0 text-right">
         <p className="text-sm font-semibold text-ink">{ad.impressions}</p>
-        <p className="text-[11px] text-emerald-400">Active</p>
+        {ad.status === 'Active' ? (
+          <p className="text-[11px] text-emerald-400">Active</p>
+        ) : null}
       </div>
     </div>
   )

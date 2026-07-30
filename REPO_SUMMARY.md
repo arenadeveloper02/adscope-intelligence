@@ -1,22 +1,23 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:29:22.457Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:34:55.291Z.
 
 ## Overview
 
-AdScope Intelligence — Google Ads competitive intel that now surfaces ONLY currently live ads, with a graceful empty state when a company has no active ads.
+AdScope Intelligence — enter any company name or website and instantly see only its currently live Google Ads footprint: formats, regions, first-seen dates, and volume signals.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Company / domain search with instant Google Ads analysis
+- Company / domain search with Analyze flow
 - Live-only ad feed — Paused/Inactive/Ended ads are filtered out before rendering
-- Header count chip reflects live ad count after filtering
-- Graceful empty state when zero live ads are running
-- KPI tiles, ad volume score ring, and format breakdown
-- Recent searches persisted via Prisma + Neon Postgres
+- Header count chip reflects only currently-live ads
+- Graceful empty state when a company has zero live ads
+- KPI tiles, ad volume score ring, and format breakdown bars
+- Recent searches persisted via Prisma + Postgres
+- Dark glass UI with cyan→violet gradients and motion
 
 ## Tech Stack
 
@@ -112,7 +113,7 @@ AdScope Intelligence — Google Ads competitive intel that now surfaces ONLY cur
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T11:29:22.457Z
+- **Updated at:** 2026-07-30T11:34:55.291Z
 - **Request:** Edit the existing app so it ONLY shows Google Ads that are CURRENTLY LIVE / actively running. Do not show ads that are Paused, Inactive, Ended, Expired, or otherwise no longer running.
 
 Specifically:

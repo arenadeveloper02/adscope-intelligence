@@ -94,8 +94,9 @@ export function runAnalysis(rawQuery: string): AnalysisResult {
   const rng = createRng(hashString(domain))
   const candidateCount = 8 + Math.floor(rng() * 14)
 
-  // Only currently-live ads are kept. Paused / inactive / ended creatives are
-  // dropped here so they never reach the UI, KPIs, or the count chip.
+  // ONLY currently-live ads are kept. Paused / inactive / ended / expired
+  // creatives are dropped here so they never reach the UI, KPIs, format
+  // breakdown, or the count chip.
   const ads: AdItem[] = []
   const formatCounts: Record<AdFormat, number> = { Search: 0, Display: 0, Video: 0, Shopping: 0 }
   let earliest = '9999-12-31'
@@ -114,7 +115,7 @@ export function runAnalysis(rawQuery: string): AnalysisResult {
     const impressionsIdx = Math.floor(rng() * IMPRESSION_BUCKETS.length)
     const isLive = rng() < 0.88
 
-    if (!isLive) continue // drop paused / ended ads before rendering
+    if (!isLive) continue // drop paused / ended / expired ads before rendering
 
     formatCounts[format] += 1
     if (firstSeen < earliest) earliest = firstSeen

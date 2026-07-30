@@ -50,9 +50,13 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
     void runQuery(query)
   }
 
-  // Defensive: only ever render currently-live ads, even if upstream data changes.
+  // HARD FILTER: only currently-live ads are ever rendered. Paused, Inactive,
+  // Ended, or Expired creatives are dropped here even if upstream data changes.
   const liveAds = result ? result.ads.filter((a) => a.status === 'Active') : []
-  const maxFormat = result ? Math.max(...result.formats.map((f) => f.count), 1) : 1
+  const liveFormats = result
+    ? result.formats.filter((f) => liveAds.some((a) => a.format === f.format))
+    : []
+  const maxFormat = liveFormats.length > 0 ? Math.max(...liveFormats.map((f) => f.count), 1) : 1
 
   return (
     <div className="relative z-10 mx-auto w-full max-w-5xl px-5 pb-24 pt-20 sm:pt-28">
@@ -133,12 +137,12 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
             </div>
           ) : (
             <>
-              {/* KPI tiles */}
+              {/* KPI tiles — all counts derived from LIVE ads only */}
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <KpiTile label="Active Ads" value={String(liveAds.length)} delta="live now" />
-                <KpiTile label="Formats" value={String(result.kpis.formatCount)} />
+                <KpiTile label="Formats" value={String(liveFormats.length)} />
                 <KpiTile label="First Seen" value={result.kpis.firstSeen} />
-                <KpiTile label="Regions" value={String(result.kpis.regionCount)} delta="expanding" />
+                <KpiTile label="Regions" value={String(new Set(liveAds.map((a) => a.region)).size)} delta="expanding" />
               </div>
 
               {/* Score + format breakdown */}
@@ -149,7 +153,7 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
                 <div className="glass fade-up p-6">
                   <p className="kpi-label mb-5">Format Breakdown</p>
                   <div className="space-y-4">
-                    {result.formats.map((f) => (
+                    {liveFormats.map((f) => (
                       <div key={f.format}>
                         <div className="mb-1.5 flex items-center justify-between text-xs">
                           <span className="font-medium text-ink">{f.format}</span>
