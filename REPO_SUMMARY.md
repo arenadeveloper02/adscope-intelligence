@@ -1,22 +1,22 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:03:26.581Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:03:37.190Z.
 
 ## Overview
 
-AdScope Intelligence — enter any company name or website and instantly see its live Google Ads footprint: formats, regions, creatives, timing, targeting hints, and volume signals, rendered on a dark glass intelligence dashboard.
+AdScope Intelligence — enter any company name or website and instantly see its currently-live Google Ads footprint with rich expandable per-ad detail: full creative text, landing URLs, placement, timing, targeting hints, and metric ranges.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Company / domain search with Analyze flow and recent-search chips
-- Live-ads-only feed — Paused/Inactive/Ended/Expired creatives are filtered before render
-- Expandable ad cards with full creative, placement, timing, targeting, and metric detail
+- Live-only ad feed — Paused/Ended/Expired creatives are filtered before render
+- Expandable ad cards with full creative, URLs, placement, timing, regions, targeting hints, and metric chips
 - Pulsing emerald LIVE indicator and per-card Live pills
-- KPI tiles, cyan→violet volume score ring, and format breakdown bars
-- Neon Postgres persistence of analysis history via Prisma
+- KPI tiles, Ad Volume Score ring, and format breakdown derived from live ads only
+- Recent searches persisted to Neon Postgres via Prisma
+- Dark glass UI with cyan→violet gradient theme
 
 ## Tech Stack
 
@@ -112,7 +112,7 @@ AdScope Intelligence — enter any company name or website and instantly see its
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T13:03:26.581Z
+- **Updated at:** 2026-07-30T13:03:37.190Z
 - **Request:** Edit the existing adscope-intelligence app. Keep the build passing and all current behavior; the ONLY new work is to SHOW MORE AD DETAIL on the page.
 
 0) BUILD MUST STAY GREEN: keep the build script exactly as `prisma generate && prisma db push --accept-data-loss && next build`. Do not remove the --accept-data-loss flag.
