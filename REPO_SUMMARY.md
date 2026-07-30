@@ -1,22 +1,21 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:39:52.608Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:43:21.965Z.
 
 ## Overview
 
-AdScope Intelligence — enter any company name or website and instantly see its currently-live Google Ads footprint with formats, regions, first-seen dates, and volume scoring.
+AdScope Intelligence — enter any company name or website and instantly see its currently-live Google Ads footprint: formats, regions, first-seen dates, and volume signals.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Live-ads-only feed — Paused/Inactive/Ended/Expired creatives are hard-filtered before rendering
-- Pulsing green LIVE indicator next to the header count chip
-- Green 'Live' pill with subtle emerald glow on every ad card
-- Company search with deterministic ad-signal analysis
-- KPI tiles, ad volume score ring, and format breakdown derived from live ads only
-- Recent searches persisted to Postgres via Prisma
+- Company / domain search with instant Google Ads analysis
+- Live-ads-only feed — Paused/Ended/Expired creatives are filtered before rendering
+- Pulsing emerald LIVE indicator next to the live-count chip and a Live pill on every ad row
+- KPI tiles, cyan→violet ad-volume score ring, and format breakdown derived from live ads only
+- Recent searches persisted in Neon Postgres via Prisma
 
 ## Tech Stack
 
@@ -112,18 +111,21 @@ AdScope Intelligence — enter any company name or website and instantly see its
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T11:39:52.608Z
-- **Request:** Edit the existing adscope-intelligence app. Two things:
+- **Updated at:** 2026-07-30T11:43:21.965Z
+- **Request:** Edit the existing adscope-intelligence app. The Vercel build is currently FAILING on a Prisma migration error, not on app code. Fix the build first, then keep the live-ads behavior. Do ALL of the following:
 
-A) LIVE-ADS-ONLY (re-verify and harden this — it must be enforced):
-- Only render Google Ads that are CURRENTLY LIVE / actively running. Filter out every Paused, Inactive, Ended, or Expired ad BEFORE rendering (drop status !== 'active' / is_running === false / any ad whose end date is in the past).
-- Never render a 'Paused' label anywhere. If you show a status pill at all, it must only ever read 'Live'.
-- The header count chip must count LIVE ads only, after filtering.
-- If a company has zero currently-live ads, show the empty state 'No live ads currently running for this company' instead of listing stale ads.
+1) FIX THE BUILD (root cause): The build command runs `prisma db push` and it fails with `code: potential_dataloss` because it wants to drop the `updatedAt` column on the `AdAnalysis` table which still has non-null data. Fix this by making the `db push` non-blocking:
+   - In package.json, change the build script's `prisma db push` to `prisma db push --accept-data-loss` (keep `prisma generate` before it and `next build` after it). So the build script becomes: `prisma generate && prisma db push --accept-data-loss && next build`.
+   - Do NOT otherwise change the Prisma schema data model unless needed to compile.
 
-B) NEW visible change so the edit has something to push — add a small live-status indicator to each ad card and the header:
-- Add a pulsing green dot (a subtle CSS keyframe pulse) immediately to the LEFT of the header count chip, with the label 'LIVE' next to it, so users can see the results are filtered to live ads only.
-- On each ad card, add a tiny green 'Live' pill (rounded, subtle green glow) in the top-right corner of the card.
-- Keep the green tasteful and consistent with the dark theme — use a muted emerald (#34d399) with low-opacity glow, not a harsh bright green.
+2) LIVE-ADS-ONLY (must stay enforced):
+   - Only render Google Ads that are CURRENTLY LIVE / actively running. Filter out every Paused, Inactive, Ended, or Expired ad BEFORE rendering.
+   - Never render a 'Paused' label. Any status pill may only ever read 'Live'.
+   - The header count chip counts LIVE ads only, after filtering.
+   - If a company has zero currently-live ads, show the empty state 'No live ads currently running for this company'.
+
+3) LIVE INDICATOR (visible change):
+   - Add a pulsing muted-emerald (#34d399, low-opacity glow) dot with a 'LIVE' label to the LEFT of the header count chip.
+   - Add a small emerald 'Live' pill in the top-right corner of each ad card.
 
 Keep everything else EXACTLY as-is: the dark intelligence.position2.com theme, glass cards, cyan->violet gradient, KPI tiles, live-signal feed styling, animations, the company search + Analyze flow, and the Sim API key.
