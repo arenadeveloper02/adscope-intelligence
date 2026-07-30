@@ -52,6 +52,7 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
 
   // HARD FILTER: only currently-live ads are ever rendered. Paused, Inactive,
   // Ended, or Expired creatives are dropped here even if upstream data changes.
+  // Every KPI, format bar, and the header count chip is derived from liveAds.
   const liveAds = result ? result.ads.filter((a) => a.status === 'Active') : []
   const liveFormats = result
     ? result.formats.filter((f) => liveAds.some((a) => a.format === f.format))
@@ -175,10 +176,16 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
               <div className="glass fade-up mt-4 p-6">
                 <div className="mb-4 flex items-center justify-between">
                   <p className="kpi-label">Live Ad Signals</p>
-                  <span className="pill-eye !text-[10px]">
-                    <span className="pill-dot" />
-                    {liveAds.length} active
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="live-indicator">
+                      <span className="live-dot" />
+                      LIVE
+                    </span>
+                    <span className="pill-eye !text-[10px]">
+                      <span className="pill-dot" />
+                      {liveAds.length} active
+                    </span>
+                  </div>
                 </div>
                 <div className="divide-y divide-white/5">
                   {liveAds.map((ad, i) => (

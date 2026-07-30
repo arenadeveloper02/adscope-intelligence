@@ -8,6 +8,7 @@
   --muted: #9aa4c4;
   --cyan: #22d3ee;
   --violet: #8b5cf6;
+  --live: #34d399;
 }
 
 html {
@@ -132,6 +133,62 @@ body {
   50% {
     opacity: 0.5;
     transform: scale(0.75);
+  }
+}
+
+/* ---------- Live status indicators ---------- */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--live);
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--live);
+  box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4);
+  animation: livePulse 2s ease-in-out infinite;
+}
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: rgba(52, 211, 153, 0.08);
+  color: var(--live);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.14);
+}
+.live-pill-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--live);
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.35);
+    opacity: 1;
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(52, 211, 153, 0);
+    opacity: 0.7;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+    opacity: 1;
   }
 }
 
@@ -332,7 +389,9 @@ body {
   .fx-mesh,
   .pill-dot,
   .orbit-ring,
-  .orbit-core {
+  .orbit-core,
+  .live-dot,
+  .live-pill-dot {
     animation: none;
   }
   .fade-up {
