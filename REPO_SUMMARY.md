@@ -1,22 +1,21 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:38:58.326Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T11:39:37.273Z.
 
 ## Overview
 
-AdScope Intelligence — Google Ads competitive intel that surfaces only currently-live ads for any company, with formats, regions, first-seen dates, and volume scoring.
+AdScope Intelligence — Google Ads competitive intel: enter any company and see only its currently-live Google Ads with formats, regions, and volume signals, now with explicit LIVE indicators.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Company search with instant Google Ads footprint analysis
-- Live-only ad feed — Paused/Inactive/Ended/Expired ads are filtered out before rendering
-- KPI tiles and count chips computed exclusively from live ads
-- Graceful empty state when a company has zero live ads
-- Ad Volume Score ring with cyan→violet gradient
-- Format breakdown bars derived from live ads only
+- Live-ads-only enforcement: Paused/Inactive/Ended ads are filtered out before rendering
+- Pulsing green LIVE indicator next to the header count chip
+- Subtle emerald 'Live' pill on every ad card
+- KPI tiles and format breakdown computed from live ads only
+- Empty state when a company has zero currently-live ads
 - Recent searches persisted in Postgres via Prisma
 
 ## Tech Stack
@@ -113,13 +112,18 @@ AdScope Intelligence — Google Ads competitive intel that surfaces only current
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T11:38:58.326Z
-- **Request:** Edit the existing app so it ONLY shows Google Ads that are CURRENTLY LIVE / actively running. Do not show ads that are Paused, Inactive, Ended, Expired, or otherwise no longer running.
+- **Updated at:** 2026-07-30T11:39:37.273Z
+- **Request:** Edit the existing adscope-intelligence app. Two things:
 
-Specifically:
-1. When fetching ads, filter the results to keep ONLY ads whose status is currently active/live (e.g. status === 'active' / is_running === true / no end date in the past). Drop every Paused/Inactive/Ended ad before rendering.
-2. Remove the per-row status label entirely (no 'Active' or 'Paused' text next to the metric) OR only ever render 'Active' since every shown ad is live — but do NOT render 'Paused'.
-3. The header count chip (e.g. 'N ACTIVE') must reflect the count of LIVE ads only, after filtering.
-4. If a company has zero currently-live ads, show a graceful empty state ('No live ads currently running for this company') instead of listing stale ads.
+A) LIVE-ADS-ONLY (re-verify and harden this — it must be enforced):
+- Only render Google Ads that are CURRENTLY LIVE / actively running. Filter out every Paused, Inactive, Ended, or Expired ad BEFORE rendering (drop status !== 'active' / is_running === false / any ad whose end date is in the past).
+- Never render a 'Paused' label anywhere. If you show a status pill at all, it must only ever read 'Live'.
+- The header count chip must count LIVE ads only, after filtering.
+- If a company has zero currently-live ads, show the empty state 'No live ads currently running for this company' instead of listing stale ads.
 
-Keep everything else exactly as-is: the dark intelligence.position2.com theme, glass cards, cyan->violet gradient, KPI tiles, live-signal feed styling, animations, the company search + Analyze flow, and the Sim API key.
+B) NEW visible change so the edit has something to push — add a small live-status indicator to each ad card and the header:
+- Add a pulsing green dot (a subtle CSS keyframe pulse) immediately to the LEFT of the header count chip, with the label 'LIVE' next to it, so users can see the results are filtered to live ads only.
+- On each ad card, add a tiny green 'Live' pill (rounded, subtle green glow) in the top-right corner of the card.
+- Keep the green tasteful and consistent with the dark theme — use a muted emerald (#34d399) with low-opacity glow, not a harsh bright green.
+
+Keep everything else EXACTLY as-is: the dark intelligence.position2.com theme, glass cards, cyan->violet gradient, KPI tiles, live-signal feed styling, animations, the company search + Analyze flow, and the Sim API key.
