@@ -1,22 +1,21 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:03:54.081Z.
+> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:46:31.808Z.
 
 ## Overview
 
-AdScope Intelligence — enter any company name or website and instantly surface its currently-live Google Ads footprint with rich, expandable per-ad detail: creatives, placements, timing, targeting, and metric ranges.
+AdScope Intelligence — enter any company name or website and instantly see its live Google Ads footprint, now with client-side CSV export of live ad results.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Company / domain search with Analyze flow and recent-search chips
-- Live-ads-only feed — Paused/Ended/Expired ads are never rendered
-- Expandable ad cards with full creative, placement, timing, targeting, and metric detail
-- New detail fields: full ad copy, call-to-action, and device targeting chips
-- KPI tiles, volume score ring, and format breakdown derived from live ads only
-- Neon Postgres persistence of analysis history via Prisma
+- Company / domain Google Ads analysis with live-ads-only filtering
+- KPI tiles, volume score ring, and format breakdown derived from live ads
+- Expandable ad cards with full creative, placement, timing, geo, and metric detail
+- Client-side Export CSV button for all currently displayed live ads
+- Recent searches persisted in Neon Postgres via Prisma
 
 ## Tech Stack
 
@@ -112,23 +111,20 @@ AdScope Intelligence — enter any company name or website and instantly surface
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T13:03:54.081Z
-- **Request:** Edit the existing adscope-intelligence app. Keep the build passing and all current behavior; the ONLY new work is to SHOW MORE AD DETAIL on the page.
+- **Updated at:** 2026-07-30T13:46:31.808Z
+- **Request:** Edit the existing adscope-intelligence app. Keep the build passing and all current behavior; the ONLY new work is to ADD A CSV EXPORT BUTTON for the live ad results.
 
 0) BUILD MUST STAY GREEN: keep the build script exactly as `prisma generate && prisma db push --accept-data-loss && next build`. Do not remove the --accept-data-loss flag.
 
-1) KEEP LIVE-ADS-ONLY (unchanged): only render Google Ads that are CURRENTLY LIVE. Continue filtering out Paused/Inactive/Ended/Expired ads before rendering. Header count chip counts LIVE ads only. Keep the pulsing emerald 'LIVE' indicator left of the count chip and the small emerald 'Live' pill on each ad card. Keep the empty state 'No live ads currently running for this company'.
+1) KEEP EVERYTHING CURRENT (unchanged): live-ads-only filtering (Paused/Inactive/Ended/Expired removed before rendering), the header count chip counting LIVE ads only, the pulsing emerald 'LIVE' indicator, the per-card 'Live' pill, the empty state, the expandable ad cards with the full ad detail (creative headline/body, display + final landing URL link, advertiser/brand, image/video preview with placeholder, format & placement, first-seen/last-seen/days-running, targeting/geo, impressions/spend/reach chips, and the 'View on Google Ads Transparency' link), plus the 'More details' toggle. Do not remove or regress any of this.
 
-2) SHOW MORE AD DETAIL (the new work): For each live ad card, surface all available fields returned by the ad-detail source (ScrapeCreators / getAdDetail). Expand each card from the current summary into a richer detail layout including, wherever the data exists:
-   - Full ad creative: headline(s), description/body text, display URL and final landing URL (as a clickable link), and the advertiser/brand name.
-   - Creative preview: image/thumbnail or video creative if present; render a proper <img>/video, with a graceful placeholder when no creative URL is available.
-   - Format & placement: ad format (text/image/video/responsive), and any placement/network info.
-   - Timing: first-seen date, last-seen date, and total days running (computed), shown as a small metadata row.
-   - Targeting/geo: regions/countries the ad is shown in, and any audience/targeting hints available.
-   - Metrics: impressions / spend / reach ranges if provided, shown as compact stat chips.
-   - A 'View on Google Ads Transparency' external link when an ad URL/id is available.
-   Make each card EXPANDABLE: show the key summary by default and a 'More details' toggle (or accordion) that reveals the full field set, so cards stay scannable. Only render fields that actually have data — never show empty labels or 'undefined'/'null'.
+2) ADD CSV EXPORT (the new work): Add an 'Export CSV' button in the results header area, near the count chip / next to the LIVE indicator. Behavior:
+   - Client-side download only (no server round-trip): build the CSV in the browser from the CURRENTLY DISPLAYED LIVE ADS and trigger a download via a Blob + object URL.
+   - Include one row per live ad with columns for every meaningful field: advertiser/brand, headline, body/description, format, display URL, final landing URL, first seen, last seen, days running, regions/geo, impressions, spend, reach, and the Google Ads Transparency URL. Only include columns that have data across the set; leave cells blank where a field is missing (never write 'undefined'/'null').
+   - Properly escape CSV values (wrap in quotes, escape embedded quotes and commas/newlines).
+   - Filename should include the searched company and date, e.g. `adscope-<company>-<YYYY-MM-DD>.csv`.
+   - Disable/hide the button when there are no live ads to export.
 
-3) STYLING: keep the dark intelligence.position2.com theme, glass cards, cyan->violet gradient, KPI tiles, live-signal feed styling, and animations. New detail rows should use the existing muted-label + value styling, hairline dividers, and the same chip styling used elsewhere. Keep everything responsive.
+3) STYLING: style the Export CSV button to match the site — use the existing ghost/secondary button styling (hairline border, muted-to-white text, subtle hover) with a small download icon, consistent with the dark intelligence.position2.com theme, glass cards, and cyan->violet gradient accents. Keep it responsive and aligned with the count chip.
 
 Keep everything else EXACTLY as-is: the company search + Analyze flow, recent-search chips, the Sim API key, and the Neon Postgres persistence.

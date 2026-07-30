@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { analyzeCompany } from '@/lib/actions'
-import type { AnalysisResult, RecentSearch } from '@/lib/types'
+import type { AdItem, AnalysisResult, RecentSearch } from '@/lib/types'
 import PillEye from '@/components/PillEye'
 import OrbitSpinner from '@/components/OrbitSpinner'
 import KpiTile from '@/components/KpiTile'
@@ -11,6 +11,66 @@ import AdRow from '@/components/AdRow'
 
 interface HomeClientProps {
   recentSearches: RecentSearch[]
+}
+
+// ---------- CSV export helpers (client-side only, no server round-trip) ----------
+
+function csvEscape(value: string): string {
+  if (/[",\n\r]/.test(value)) {
+    return '"' + value.replace(/"/g, '""') + '"'
+  }
+  return value
+}
+
+function csvDaysRunning(firstSeen: string, lastSeen?: string): string {
+  const start = new Date(firstSeen).getTime()
+  const end = lastSeen ? new Date(lastSeen).getTime() : Date.now()
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return ''
+  return String(Math.max(1, Math.round((end - start) / 86400000)))
+}
+
+interface CsvColumn {
+  label: string
+  get: (a: AdItem) => string
+}
+
+function buildCsv(ads: AdItem[]): string {
+  const columns: CsvColumn[] = [
+    { label: 'Advertiser', get: (a) => a.advertiser ?? '' },
+    { label: 'Headline', get: (a) => a.headline },
+    { label: 'Headline 2', get: (a) => a.secondaryHeadline ?? '' },
+    { label: 'Description', get: (a) => a.description },
+    { label: 'Format', get: (a) => a.format },
+    { label: 'Creative Type', get: (a) => a.creativeType ?? '' },
+    { label: 'Call to Action', get: (a) => a.ctaText ?? '' },
+    { label: 'Display URL', get: (a) => a.displayUrl ?? '' },
+    { label: 'Final URL', get: (a) => a.finalUrl ?? '' },
+    { label: 'Placement', get: (a) => a.placement ?? '' },
+    { label: 'Network', get: (a) => a.network ?? '' },
+    { label: 'First Seen', get: (a) => a.firstSeen },
+    { label: 'Last Seen', get: (a) => a.lastSeen ?? '' },
+    { label: 'Days Running', get: (a) => csvDaysRunning(a.firstSeen, a.lastSeen) },
+    {
+      label: 'Regions',
+      get: (a) => (a.regions && a.regions.length > 0 ? a.regions.join('; ') : a.region),
+    },
+    { label: 'Devices', get: (a) => (a.devices && a.devices.length > 0 ? a.devices.join('; ') : '') },
+    {
+      label: 'Targeting Hints',
+      get: (a) => (a.audienceHints && a.audienceHints.length > 0 ? a.audienceHints.join('; ') : ''),
+    },
+    { label: 'Impressions', get: (a) => a.impressions },
+    { label: 'Spend', get: (a) => a.spend ?? '' },
+    { label: 'Reach', get: (a) => a.reach ?? '' },
+    { label: 'Transparency URL', get: (a) => a.transparencyUrl ?? '' },
+  ]
+
+  // Only include columns that have data across the exported set — blank cells
+  // stay blank (never 'undefined' / 'null').
+  const active = columns.filter((c) => ads.some((a) => c.get(a).trim() !== ''))
+  const header = active.map((c) => csvEscape(c.label)).join(',')
+  const rows = ads.map((a) => active.map((c) => csvEscape(c.get(a))).join(','))
+  return [header, ...rows].join('\r\n')
 }
 
 export default function HomeClient({ recentSearches }: HomeClientProps) {
@@ -52,12 +112,33 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
 
   // HARD FILTER: only currently-live ads are ever rendered. Paused, Inactive,
   // Ended, or Expired creatives are dropped here even if upstream data changes.
-  // Every KPI, format bar, and the header count chip is derived from liveAds.
+  // Every KPI, format bar, the header count chip, AND the CSV export are
+  // derived from liveAds.
   const liveAds = result ? result.ads.filter((a) => a.status === 'Active') : []
   const liveFormats = result
     ? result.formats.filter((f) => liveAds.some((a) => a.format === f.format))
     : []
   const maxFormat = liveFormats.length > 0 ? Math.max(...liveFormats.map((f) => f.count), 1) : 1
+
+  function handleExportCsv() {
+    if (!result || liveAds.length === 0) return
+    const csv = buildCsv(liveAds)
+    const slug =
+      result.companyName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'company'
+    const date = new Date().toISOString().slice(0, 10)
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `adscope-${slug}-${date}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="relative z-10 mx-auto w-full max-w-5xl px-5 pb-24 pt-20 sm:pt-28">
@@ -174,9 +255,9 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
 
               {/* Live ad feed — only currently running ads */}
               <div className="glass fade-up mt-4 p-6">
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <p className="kpi-label">Live Ad Signals</p>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <span className="live-indicator">
                       <span className="live-dot" />
                       LIVE
@@ -185,6 +266,31 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
                       <span className="pill-dot" />
                       {liveAds.length} active
                     </span>
+                    <button
+                      type="button"
+                      className="btn-ghost !px-3 !py-1.5 text-xs !gap-1.5 inline-flex items-center"
+                      onClick={handleExportCsv}
+                      disabled={liveAds.length === 0}
+                      aria-label="Export live ads as CSV"
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                        className="mr-1.5 shrink-0"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Export CSV
+                    </button>
                   </div>
                 </div>
                 <div className="divide-y divide-white/5">
