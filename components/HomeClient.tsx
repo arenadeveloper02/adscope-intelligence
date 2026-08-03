@@ -2,18 +2,16 @@
 
 import { useState } from 'react'
 import { analyzeCompany } from '@/lib/actions'
-import type { AdItem, AnalysisResult, RecentSearch } from '@/lib/types'
+import type { RecentSearch, WorkflowAnalysis } from '@/lib/types'
 import PillEye from '@/components/PillEye'
 import OrbitSpinner from '@/components/OrbitSpinner'
 import KpiTile from '@/components/KpiTile'
-import ScoreRing from '@/components/ScoreRing'
-import AdRow from '@/components/AdRow'
 
 interface HomeClientProps {
   recentSearches: RecentSearch[]
 }
 
-// ---------- CSV export helpers (client-side only, no server round-trip) ----------
+// ---------- CSV export helpers (client-side only) ----------
 
 function csvEscape(value: string): string {
   if (/[",\n\r]/.test(value)) {
@@ -22,62 +20,21 @@ function csvEscape(value: string): string {
   return value
 }
 
-function csvDaysRunning(firstSeen: string, lastSeen?: string): string {
-  const start = new Date(firstSeen).getTime()
-  const end = lastSeen ? new Date(lastSeen).getTime() : Date.now()
-  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return ''
-  return String(Math.max(1, Math.round((end - start) / 86400000)))
+function buildCsv(columns: string[], rows: string[][]): string {
+  const header = columns.map(csvEscape).join(',')
+  const lines = rows.map((row) => columns.map((_, i) => csvEscape(row[i] ?? '')).join(','))
+  return [header, ...lines].join('\r\n')
 }
 
-interface CsvColumn {
-  label: string
-  get: (a: AdItem) => string
-}
-
-function buildCsv(ads: AdItem[]): string {
-  const columns: CsvColumn[] = [
-    { label: 'Advertiser', get: (a) => a.advertiser ?? '' },
-    { label: 'Headline', get: (a) => a.headline },
-    { label: 'Headline 2', get: (a) => a.secondaryHeadline ?? '' },
-    { label: 'Description', get: (a) => a.description },
-    { label: 'Format', get: (a) => a.format },
-    { label: 'Creative Type', get: (a) => a.creativeType ?? '' },
-    { label: 'Call to Action', get: (a) => a.ctaText ?? '' },
-    { label: 'Display URL', get: (a) => a.displayUrl ?? '' },
-    { label: 'Final URL', get: (a) => a.finalUrl ?? '' },
-    { label: 'Placement', get: (a) => a.placement ?? '' },
-    { label: 'Network', get: (a) => a.network ?? '' },
-    { label: 'First Seen', get: (a) => a.firstSeen },
-    { label: 'Last Seen', get: (a) => a.lastSeen ?? '' },
-    { label: 'Days Running', get: (a) => csvDaysRunning(a.firstSeen, a.lastSeen) },
-    {
-      label: 'Regions',
-      get: (a) => (a.regions && a.regions.length > 0 ? a.regions.join('; ') : a.region),
-    },
-    { label: 'Devices', get: (a) => (a.devices && a.devices.length > 0 ? a.devices.join('; ') : '') },
-    {
-      label: 'Targeting Hints',
-      get: (a) => (a.audienceHints && a.audienceHints.length > 0 ? a.audienceHints.join('; ') : ''),
-    },
-    { label: 'Impressions', get: (a) => a.impressions },
-    { label: 'Spend', get: (a) => a.spend ?? '' },
-    { label: 'Reach', get: (a) => a.reach ?? '' },
-    { label: 'Transparency URL', get: (a) => a.transparencyUrl ?? '' },
-  ]
-
-  // Only include columns that have data across the exported set — blank cells
-  // stay blank (never 'undefined' / 'null').
-  const active = columns.filter((c) => ads.some((a) => c.get(a).trim() !== ''))
-  const header = active.map((c) => csvEscape(c.label)).join(',')
-  const rows = ads.map((a) => active.map((c) => csvEscape(c.get(a))).join(','))
-  return [header, ...rows].join('\r\n')
+function isUrl(value: string): boolean {
+  return /^https?:\/\/\S+$/i.test(value.trim())
 }
 
 export default function HomeClient({ recentSearches }: HomeClientProps) {
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [result, setResult] = useState<WorkflowAnalysis | null>(null)
   const [recents, setRecents] = useState<RecentSearch[]>(recentSearches)
 
   async function runQuery(q: string) {
@@ -92,13 +49,14 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
       setError(res.error ?? 'Something went wrong.')
       return
     }
-    setResult(res.data)
+    const data = res.data
+    setResult(data)
     setRecents((prev) => {
       const entry: RecentSearch = {
-        id: `${res.data?.domain ?? trimmed}-${Date.now()}`,
-        companyName: res.data?.companyName ?? trimmed,
-        domain: res.data?.domain ?? trimmed,
-        totalAds: res.data?.kpis.totalAds ?? 0,
+        id: `${data.domain}-${Date.now()}`,
+        companyName: data.companyName,
+        domain: data.domain,
+        totalAds: data.summary ? data.summary.activeAdsFound : data.rows.length,
         createdAt: new Date().toISOString(),
       }
       return [entry, ...prev.filter((p) => p.domain !== entry.domain)].slice(0, 6)
@@ -110,19 +68,9 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
     void runQuery(query)
   }
 
-  // HARD FILTER: only currently-live ads are ever rendered. Paused, Inactive,
-  // Ended, or Expired creatives are dropped here even if upstream data changes.
-  // Every KPI, format bar, the header count chip, AND the CSV export are
-  // derived from liveAds.
-  const liveAds = result ? result.ads.filter((a) => a.status === 'Active') : []
-  const liveFormats = result
-    ? result.formats.filter((f) => liveAds.some((a) => a.format === f.format))
-    : []
-  const maxFormat = liveFormats.length > 0 ? Math.max(...liveFormats.map((f) => f.count), 1) : 1
-
   function handleExportCsv() {
-    if (!result || liveAds.length === 0) return
-    const csv = buildCsv(liveAds)
+    if (!result || result.rows.length === 0) return
+    const csv = buildCsv(result.columns, result.rows)
     const slug =
       result.companyName
         .toLowerCase()
@@ -140,6 +88,8 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
     URL.revokeObjectURL(url)
   }
 
+  const summary = result ? result.summary : null
+
   return (
     <div className="relative z-10 mx-auto w-full max-w-5xl px-5 pb-24 pt-20 sm:pt-28">
       {/* Hero */}
@@ -150,8 +100,8 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
           <span className="ital-grad">before your next move.</span>
         </h1>
         <p className="lead mt-5 max-w-2xl">
-          Enter any company name or website and instantly surface its live Google Ads footprint —
-          formats, regions, first-seen dates, and volume signals.
+          Enter any company name or website and we run a live intelligence workflow — advertiser
+          identity, creatives, positioning, services, keywords, pricing signals, and audiences.
         </p>
 
         <form onSubmit={handleSubmit} className="glass mt-9 flex w-full max-w-2xl items-center gap-2 p-2">
@@ -190,132 +140,123 @@ export default function HomeClient({ recentSearches }: HomeClientProps) {
         {error && <p className="mt-6 text-sm text-rose-400">{error}</p>}
       </section>
 
-      {loading && <OrbitSpinner />}
+      {loading && (
+        <div className="mt-16 flex flex-col items-center gap-5">
+          <OrbitSpinner />
+          <p className="text-sm text-muted">Running live workflow analysis — this can take a minute…</p>
+        </div>
+      )}
 
       {result && !loading && (
         <section className="mt-16">
           {/* Company header */}
-          <div className="fade-up mb-6 flex items-center gap-4">
-            <span className="chip-avatar chip-avatar-lg">{result.companyName.charAt(0)}</span>
-            <div>
-              <h2 className="section-title text-ink">{result.companyName}</h2>
-              <p className="text-sm text-muted">{result.domain}</p>
+          <div className="fade-up mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <span className="chip-avatar chip-avatar-lg">{result.companyName.charAt(0)}</span>
+              <div>
+                <h2 className="section-title text-ink">{result.companyName}</h2>
+                <p className="text-sm text-muted">{result.domain}</p>
+              </div>
             </div>
+            <button
+              type="button"
+              className="btn-ghost !px-3 !py-1.5 text-xs"
+              onClick={handleExportCsv}
+              disabled={result.rows.length === 0}
+              aria-label="Export all records as CSV"
+            >
+              Export CSV
+            </button>
           </div>
 
-          {liveAds.length === 0 ? (
-            <div className="glass fade-up flex flex-col items-center px-6 py-16 text-center">
-              <span className="pill-eye">
-                <span className="pill-dot" />
-                0 active
-              </span>
-              <h3 className="mt-6 text-lg font-semibold text-ink">
-                No live ads currently running for this company
-              </h3>
-              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
-                We only surface ads that are actively in rotation right now. Check back later or try
-                another company.
-              </p>
-            </div>
-          ) : (
+          {/* Workflow summary KPIs */}
+          {summary && (
             <>
-              {/* KPI tiles — all counts derived from LIVE ads only */}
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <KpiTile label="Active Ads" value={String(liveAds.length)} delta="live now" />
-                <KpiTile label="Formats" value={String(liveFormats.length)} />
-                <KpiTile label="First Seen" value={result.kpis.firstSeen} />
-                <KpiTile label="Regions" value={String(new Set(liveAds.map((a) => a.region)).size)} delta="expanding" />
+                <KpiTile label="Active Ads Found" value={String(summary.activeAdsFound)} delta="live now" />
+                <KpiTile label="Paused / Excluded" value={String(summary.pausedOrInactiveExcluded)} />
+                <KpiTile label="Records Returned" value={String(result.rows.length)} />
+                <KpiTile label="Audit Status" value={summary.auditStatus || '—'} />
               </div>
-
-              {/* Score + format breakdown */}
-              <div className="mt-4 grid gap-4 lg:grid-cols-[280px_1fr]">
-                <div className="glass fade-up flex items-center justify-center p-6">
-                  <ScoreRing score={result.volumeScore} label="Ad Volume Score" />
-                </div>
-                <div className="glass fade-up p-6">
-                  <p className="kpi-label mb-5">Format Breakdown</p>
-                  <div className="space-y-4">
-                    {liveFormats.map((f) => (
-                      <div key={f.format}>
-                        <div className="mb-1.5 flex items-center justify-between text-xs">
-                          <span className="font-medium text-ink">{f.format}</span>
-                          <span className="text-muted">{f.count} ads</span>
-                        </div>
-                        <div className="bar-track">
-                          <div
-                            className="bar-fill"
-                            style={{ width: `${Math.round((f.count / maxFormat) * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Live ad feed — only currently running ads */}
-              <div className="glass fade-up mt-4 p-6">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                  <p className="kpi-label">Live Ad Signals</p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="live-indicator">
-                      <span className="live-dot" />
-                      LIVE
-                    </span>
-                    <span className="pill-eye !text-[10px]">
-                      <span className="pill-dot" />
-                      {liveAds.length} active
-                    </span>
-                    <button
-                      type="button"
-                      className="btn-ghost !px-3 !py-1.5 text-xs !gap-1.5 inline-flex items-center"
-                      onClick={handleExportCsv}
-                      disabled={liveAds.length === 0}
-                      aria-label="Export live ads as CSV"
-                    >
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                        className="mr-1.5 shrink-0"
-                      >
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                      Export CSV
-                    </button>
-                  </div>
-                </div>
-                <div className="divide-y divide-white/5">
-                  {liveAds.map((ad, i) => (
-                    <AdRow key={ad.id} ad={ad} index={i} />
-                  ))}
+              <div className="glass fade-up mt-4 p-5">
+                <p className="kpi-label mb-3">Workflow Summary</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="stat-chip">Advertiser {summary.advertiserFound ? 'found' : 'not found'}</span>
+                  {summary.advertiserName ? <span className="stat-chip">Name: {summary.advertiserName}</span> : null}
+                  <span className="stat-chip">Creatives processed: {summary.creativesProcessed}</span>
+                  <span className="stat-chip">Rows to add: {summary.rowsToAdd}</span>
+                  <span className="stat-chip">Failed creatives: {summary.failedCreativeCount}</span>
+                  <span className="stat-chip">CTA filled: {summary.ctaFilled}</span>
+                  <span className="stat-chip">Display URLs filled: {summary.displayUrlsFilled}</span>
+                  <span className="stat-chip">Landing pages filled: {summary.landingPagesFilled}</span>
+                  {summary.executionStatus ? (
+                    <span className="stat-chip">Execution: {summary.executionStatus}</span>
+                  ) : null}
                 </div>
               </div>
             </>
           )}
-        </section>
-      )}
 
-      {!result && !loading && (
-        <section className="mt-20 grid gap-4 sm:grid-cols-3">
-          {[
-            { t: 'Every format', d: 'Search, Display, Video, and Shopping placements in one unified feed.' },
-            { t: 'First-seen intel', d: 'Know when each creative entered rotation and how long it has survived.' },
-            { t: 'Volume scoring', d: 'A single cyan-to-violet score that ranks how aggressively they spend.' },
-          ].map((c, i) => (
-            <div key={c.t} className="glass fade-up p-6" style={{ animationDelay: `${i * 100}ms` }}>
-              <h3 className="text-base font-semibold text-ink">{c.t}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{c.d}</p>
+          {/* Full record data — EVERY column of EVERY record is rendered */}
+          {result.rows.length === 0 ? (
+            <div className="glass fade-up mt-4 flex flex-col items-center px-6 py-16 text-center">
+              <span className="pill-eye">
+                <span className="pill-dot" />
+                0 records
+              </span>
+              <h3 className="mt-6 text-lg font-semibold text-ink">
+                The workflow returned no records for this company
+              </h3>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
+                Try another company name or a full website domain.
+              </p>
             </div>
-          ))}
+          ) : (
+            <div className="mt-4 space-y-4">
+              {result.rows.map((row, ri) => (
+                <div key={`record-${ri}`} className="glass fade-up p-6" style={{ animationDelay: `${ri * 60}ms` }}>
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="kpi-label">
+                      Record {ri + 1} of {result.rows.length}
+                    </p>
+                    <span className="live-pill">
+                      <span className="live-pill-dot" />
+                      Live data
+                    </span>
+                  </div>
+                  <div className="detail-grid">
+                    {result.columns.map((label, ci) => {
+                      const value = (row[ci] ?? '').trim()
+                      const wide = value.length > 160
+                      return (
+                        <div key={`${ri}-${ci}`} style={wide ? { gridColumn: '1 / -1' } : undefined}>
+                          <p className="dt-label">{label}</p>
+                          {value ? (
+                            isUrl(value) ? (
+                              <p className="dt-value">
+                                <a
+                                  href={value}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="detail-link"
+                                >
+                                  {value}
+                                </a>
+                              </p>
+                            ) : (
+                              <p className="dt-value">{value}</p>
+                            )
+                          ) : (
+                            <p className="dt-value" style={{ color: 'var(--muted)' }}>—</p>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
     </div>

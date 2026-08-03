@@ -1,21 +1,21 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-07-30T13:46:35.097Z.
+> Auto-maintained by Sim Development. Last updated: 2026-08-03T11:07:01.124Z.
 
 ## Overview
 
-AdScope Intelligence — Google Ads competitive intel with live-ad analysis and CSV export of live ad results.
+AdScope Intelligence — enter any company name or website and run a live Google Ads intelligence workflow that returns advertiser identity, creatives, positioning, services, keywords, and audience data, all rendered in full in the UI.
 
 **Repository:** `adscope-intelligence`  
 **File count:** 26
 
 ## Features
 
-- Company search with live Google Ads footprint analysis
-- Live-ads-only filtering with KPI tiles and format breakdown
-- Expandable ad detail cards with creative, placement, and targeting intel
-- Client-side CSV export of currently displayed live ads
-- Recent searches persisted in Neon Postgres
+- Live workflow API analysis on Analyze click (agent.thearena.ai workflow execute)
+- All returned record columns rendered in the UI with labeled fields
+- Workflow summary KPIs (active ads, excluded, audit status)
+- CSV export of the full record table
+- Recent searches persisted via Prisma + Neon Postgres
 
 ## Tech Stack
 
@@ -111,20 +111,36 @@ AdScope Intelligence — Google Ads competitive intel with live-ad analysis and 
 
 ## Latest Change
 
-- **Updated at:** 2026-07-30T13:46:35.097Z
-- **Request:** Edit the existing adscope-intelligence app. Keep the build passing and all current behavior; the ONLY new work is to ADD A CSV EXPORT BUTTON for the live ad results.
+- **Updated at:** 2026-08-03T11:07:01.124Z
+- **Request:** Update the API once the Analyse Is clicked the 
+curl -X POST \
+  -H "X-API-Key: $SIM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"competitorDomain":"example","stream":true,"selectedOutputs":["formatdata.result"]}' \
+  https://agent.thearena.ai/api/workflows/1bc61d1b-c9f0-47fe-bf2d-b181579a1c70/execute
 
-0) BUILD MUST STAY GREEN: keep the build script exactly as `prisma generate && prisma db push --accept-data-loss && next build`. Do not remove the --accept-data-loss flag.
 
-1) KEEP EVERYTHING CURRENT (unchanged): live-ads-only filtering (Paused/Inactive/Ended/Expired removed before rendering), the header count chip counting LIVE ads only, the pulsing emerald 'LIVE' indicator, the per-card 'Live' pill, the empty state, the expandable ad cards with the full ad detail (creative headline/body, display + final landing URL link, advertiser/brand, image/video preview with placeholder, format & placement, first-seen/last-seen/days-running, targeting/geo, impressions/spend/reach chips, and the 'View on Google Ads Transparency' link), plus the 'More details' toggle. Do not remove or regress any of this.
+Response:
+{
+  "result": {
+    "rows": "[[\"position2.com\",\"POSITION2, Inc.\",\"AR14266320531836895233\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"AI plus human expertise rather than AI replacing marketers; real agentic AI that automates execution, monitoring, reporting, and campaign builds; ROI-focused and data-driven performance; multi-channel growth; qualified-lead generation; sustainable scaling; healthcare patient-volume growth; HIPAA-compliant marketing; dental-practice growth; consistency and repeatable execution across multiple locations; event-based relationship building at healthcare and dental conferences; creative innovation through AI and 3D visualization.\",\"\",\"Managed growth-marketing services; paid and performance media; organic search and content; creative and design services; analytics and attribution; marketing automation and RevOps; account-based marketing; AI and agentic-marketing solutions; healthcare and dental marketing; SaaS marketing; lead-generation and affiliate solutions; web management; Arena/Calibrate marketing technology; Studioˣ browser-based 3D rendering and product-visualization technology.\",\"growth marketing agency, AI marketing services, agentic AI marketing, AI growth technology, performance marketing agency, paid marketing, multi-channel paid marketing, ROI-focused paid marketing, data-driven marketing, marketing analytics, marketing automation, account-based marketing, ABM agency, SEO services, content strategy, creative assets, healthcare marketing agency, dental marketing agency, multi-location healthcare marketing, HIPAA-compliant marketing, SaaS marketing, affiliate marketing, lead generation solutions, AI agents for marketing, RevOps, 3D product visualization, browser-based rendering.\",\"An AI-powered growth engine combining expert human creativity with technology and data; rapid but sustainable growth; improved marketing efficiency and output through agentic AI; measurable ROI and qualified-lead growth; integrated execution across media, creative, analytics, automation, and content; scalable and repeatable programs for multi-location businesses; compliance-aware healthcare marketing; stronger brand awareness and acquisition readiness.\",\"LinkedIn: https://www.linkedin.com/company/position2; YouTube: https://www.youtube.com/@Position2Inc and legacy channel URL https://www.youtube.com/c/position2. No verified official Facebook, Instagram, or X profile was identified in the research results.\",\"Position² is a growth marketing agency that combines human marketing expertise, data, creative production, technology, analytics, and AI to help companies acquire customers and scale. Its current positioning centers on being an AI-powered growth engine. The business serves general B2B and growth-stage clients while maintaining dedicated offerings for healthcare, dental and multi-location organizations, SaaS companies, and account-based marketing programs.\",\"Performance marketing; multi-channel paid media; paid search and paid social; SEO; account-based marketing; content strategy; creative strategy and asset production; AI-assisted visual storytelling; marketing analytics and measurement; marketing automation; lead generation and affiliate marketing; website and webmaster services; AI growth technology; agentic AI marketing workflows; campaign monitoring, execution, reporting, and optimization; healthcare and dental growth marketing.\",\"Position2 does not prominently publish standardized prices on its website. The apparent model is custom B2B agency pricing based on scope, channels, media requirements, technology, creative output, and engagement duration. Prospects are directed toward consultations and custom proposals. Paid-media relationships may combine professional-service retainers or project fees with separately funded advertising spend.\",\"Marketing leaders, growth leaders, revenue and RevOps executives, founders, and business-unit leaders at B2B, SaaS, growth-stage, and enterprise companies. Vertical targeting includes healthcare MSOs, physician groups, dental groups and practices, multi-location operators, med-tech organizations, private-equity-backed platforms, and companies preparing to scale or improve acquisition value.\",\"2026-08-03T10:57:57.222Z\"]]",
+    "summary": {
+      "advertiserFound": true,
+      "advertiserName": "POSITION2, Inc.",
+      "activeAdsFound": 0,
+      "pausedOrInactiveExcluded": 7,
+      "creativesProcessed": 0,
+      "rowsToAdd": 1,
+      "failedCreativeCount": 0,
+      "ctaFilled": 0,
+      "displayUrlsFilled": 0,
+      "landingPagesFilled": 0,
+      "auditStatus": "pass_with_fixes",
+      "executionStatus": "completed"
+    }
+  },
+  "stdout": ""
+}
 
-2) ADD CSV EXPORT (the new work): Add an 'Export CSV' button in the results header area, near the count chip / next to the LIVE indicator. Behavior:
-   - Client-side download only (no server round-trip): build the CSV in the browser from the CURRENTLY DISPLAYED LIVE ADS and trigger a download via a Blob + object URL.
-   - Include one row per live ad with columns for every meaningful field: advertiser/brand, headline, body/description, format, display URL, final landing URL, first seen, last seen, days running, regions/geo, impressions, spend, reach, and the Google Ads Transparency URL. Only include columns that have data across the set; leave cells blank where a field is missing (never write 'undefined'/'null').
-   - Properly escape CSV values (wrap in quotes, escape embedded quotes and commas/newlines).
-   - Filename should include the searched company and date, e.g. `adscope-<company>-<YYYY-MM-DD>.csv`.
-   - Disable/hide the button when there are no live ads to export.
 
-3) STYLING: style the Export CSV button to match the site — use the existing ghost/secondary button styling (hairline border, muted-to-white text, subtle hover) with a small download icon, consistent with the dark intelligence.position2.com theme, glass cards, and cyan->violet gradient accents. Keep it responsive and aligned with the count chip.
-
-Keep everything else EXACTLY as-is: the company search + Analyze flow, recent-search chips, the Sim API key, and the Neon Postgres persistence.
+you get rows data.. Make all the records in the all the columns to be visible in the UI

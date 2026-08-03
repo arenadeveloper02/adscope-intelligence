@@ -64,3 +64,35 @@ export interface AnalyzeResponse {
   error?: string
   data?: AnalysisResult
 }
+
+// ---------- Live workflow API types ----------
+
+export interface WorkflowSummary {
+  advertiserFound: boolean
+  advertiserName: string
+  activeAdsFound: number
+  pausedOrInactiveExcluded: number
+  creativesProcessed: number
+  rowsToAdd: number
+  failedCreativeCount: number
+  ctaFilled: number
+  displayUrlsFilled: number
+  landingPagesFilled: number
+  auditStatus: string
+  executionStatus: string
+}
+
+export interface WorkflowAnalysis {
+  query: string
+  companyName: string
+  domain: string
+  columns: string[]
+  rows: string[][]
+  summary: WorkflowSummary | null
+}
+
+export interface WorkflowAnalyzeResponse {
+  success: boolean
+  error?: string
+  data?: WorkflowAnalysis
+}
