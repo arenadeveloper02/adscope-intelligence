@@ -1,6 +1,6 @@
 # Repository Summary: adscope-intelligence
 
-> Auto-maintained by Sim Development. Last updated: 2026-08-03T11:21:26.246Z.
+> Auto-maintained by Sim Development. Last updated: 2026-08-03T11:34:13.559Z.
 
 ## Overview
 
@@ -11,12 +11,12 @@ AdScope Intelligence — enter any company name or website and see the Google Ad
 
 ## Features
 
-- Live Google Ads workflow analysis triggered on Analyze click
-- Configured SIM workflow API key with environment override
-- Full record grid rendering every column of every returned row
-- Workflow summary KPIs and stat chips
-- CSV export of all records
+- Live Google Ads competitive intelligence workflow
+- Robust streamed/NDJSON/SSE response parsing with deep result extraction
+- Timeout-guarded workflow fetch with specific, actionable error messages
 - Recent searches persisted in Postgres via Prisma
+- CSV export of every returned record
+- Responsive glassmorphism UI with Tailwind CSS
 
 ## Tech Stack
 
@@ -112,12 +112,10 @@ AdScope Intelligence — enter any company name or website and see the Google Ad
 
 ## Latest Change
 
-- **Updated at:** 2026-08-03T11:21:26.246Z
-- **Request:** Update the API once the Analyse Is clicked the 
+- **Updated at:** 2026-08-03T11:34:13.559Z
+- **Request:** This is the error it threw:
+0:{"a":"$@1","f":"","b":"74EpfgolcudMvETBDgTsd"}
+1:{"success":false,"error":"Analysis failed. Please try again."}
 
-Update the SIM_API_KEY = 'sk-sim-bhhlAgoUtFzmzP8M-KMkQGwAbVDBZ0-o'
-curl -X POST \
-  -H "X-API-Key: $SIM_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"competitorDomain":"example","stream":true,"selectedOutputs":["formatdata.result"]}' \
-  https://agent.thearena.ai/api/workflows/1bc61d1b-c9f0-47fe-bf2d-b181579a1c70/execute
+
+Fix this properly
