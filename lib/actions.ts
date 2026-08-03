@@ -6,6 +6,8 @@ import type { RecentSearch, WorkflowAnalyzeResponse, WorkflowSummary } from '@/l
 const WORKFLOW_URL =
   'https://agent.thearena.ai/api/workflows/1bc61d1b-c9f0-47fe-bf2d-b181579a1c70/execute'
 
+const DEFAULT_SIM_API_KEY = 'sk-sim-bhhlAgoUtFzmzP8M-KMkQGwAbVDBZ0-o'
+
 const COLUMN_LABELS: string[] = [
   'Domain',
   'Advertiser Name',
@@ -118,10 +120,7 @@ export async function analyzeCompany(query: string): Promise<WorkflowAnalyzeResp
   if (trimmed.length > 120) {
     return { success: false, error: 'Query is too long.' }
   }
-  const apiKey = process.env.SIM_API_KEY
-  if (!apiKey) {
-    return { success: false, error: 'Analysis service is not configured (missing SIM_API_KEY).' }
-  }
+  const apiKey = process.env.SIM_API_KEY || DEFAULT_SIM_API_KEY
   try {
     const res = await fetch(WORKFLOW_URL, {
       method: 'POST',
